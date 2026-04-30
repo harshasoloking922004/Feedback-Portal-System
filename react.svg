@@ -1,0 +1,62 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from './context/AuthContext';
+
+import Navbar from './components/Navbar';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import SubmitFeedback from './pages/SubmitFeedback';
+import FeatureRequests from './pages/FeatureRequests';
+import AdminDashboard from './pages/AdminDashboard';
+import FeedbackList from './pages/FeedbackList';
+
+const PrivateRoute = ({ children }) => {
+  const { user } = useContext(AuthContext);
+  return user ? children : <Navigate to="/login" />;
+};
+
+const AdminRoute = ({ children }) => {
+  const { user } = useContext(AuthContext);
+  return user && user.role === 'admin' ? children : <Navigate to="/dashboard" />;
+};
+
+function App() {
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            
+            <Route path="/dashboard" element={
+              <PrivateRoute><Dashboard /></PrivateRoute>
+            } />
+            
+            <Route path="/submit-feedback" element={
+              <PrivateRoute><SubmitFeedback /></PrivateRoute>
+            } />
+            
+            <Route path="/features" element={
+              <AdminRoute><FeatureRequests /></AdminRoute>
+            } />
+            
+            <Route path="/feedbacks" element={
+              <PrivateRoute><FeedbackList /></PrivateRoute>
+            } />
+            
+            <Route path="/admin" element={
+              <AdminRoute><AdminDashboard /></AdminRoute>
+            } />
+            
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
