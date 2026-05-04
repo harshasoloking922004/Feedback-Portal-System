@@ -1,143 +1,108 @@
-# 🏥 Hospital Patient Queue Management System
+# Customer Feedback & Feature Request Portal
 
-A full-stack web application designed to efficiently manage patient queues in a hospital setting. The system leverages a **Priority Queue Algorithm (Max-Heap)** to prioritize patients based on the severity of their condition. In scenarios where multiple patients have the same priority level, a **First-In-First-Out (FIFO)** approach is used to ensure fairness based on arrival time.
+A comprehensive full-stack MERN application designed for managing customer feedback and crowdsourcing feature requests for various applications and games. 
 
----
+## 🚀 Key Features
 
-## 🌟 Features
-
-- **Dynamic Patient Registration:** Easily register new patients with details like Name, Age, Problem, and Priority Level.
-- **Automated Prioritization:** Automatically sorts patients based on a 4-tier urgency system (Low, Medium, High, Emergency).
-- **Smart Queue Algorithm:** Built-in Max-Heap logic ensures critical patients are served first without manual intervention.
-- **Real-Time Queue Display:** View the active waiting queue in a clean, modern, and responsive UI.
-- **Emergency Highlights:** Critical (Level 4) patients are highlighted and animated to ensure they are immediately noticeable.
-- **"Call Next" Functionality:** One-click mechanism to dequeue the highest-priority patient and update their status to "served".
+*   **Role-Based Access Control (RBAC):** Distinct roles for standard `user` and `admin`. Admins have extended privileges to manage feedback and review feature statuses.
+*   **Product Categorization:** Users can target their feedback to specific products (e.g., Games like PUBG, Free Fire, Call of Duty; Apps like WhatsApp, YouTube, Instagram).
+*   **Feature Voting System:** A community-driven feature where users can upvote feature requests they want to see implemented.
+*   **Admin Dashboard:** A centralized control panel for administrators to moderate feedback and update the development status of feature requests (Pending, Under Review, Implemented).
+*   **Secure Authentication:** JWT-based authentication with bcrypt password hashing.
 
 ---
 
-## 💻 Technologies Used
+## 🏗️ Project Architecture
 
-**Frontend:**
-- HTML5
-- CSS3 (Custom CSS variables, Animations, Flexbox/Grid)
-- Vanilla JavaScript (ES6, Fetch API)
+The application follows a standard client-server architecture using the **MERN** stack (MongoDB, Express.js, React, Node.js). 
 
-**Backend:**
-- Node.js
-- Express.js
-- MongoDB & Mongoose (Database & ODM)
-
-**Algorithm:**
-- Custom Data Structures (Max-Heap Priority Queue)
-
----
-
-## ⚙️ Algorithm Explanation (Priority Queue)
-
-This project implements a **Max-Heap Data Structure** to manage the queue efficiently. 
-
-1. **Heap Properties:** A binary tree structure where the parent node always has a higher (or equal) priority than its child nodes.
-2. **Insertion (`enqueue`):** When a new patient arrives, they are inserted at the end of the heap. The tree then performs a `heapifyUp` operation, swapping the new patient with its parent until the heap property is restored.
-3. **Extraction (`dequeue`):** When the "Call Next Patient" button is pressed, the root node (highest priority patient) is extracted. The last element in the heap is moved to the root, and a `heapifyDown` operation ensures the tree is re-balanced.
-4. **Tie-Breaking:** If two patients have the **exact same priority level**, the algorithm falls back to comparing their `createdAt` timestamps, meaning the patient who arrived earlier gets served first (**FIFO**).
-
----
-
-## 📂 Project Structure
+### Directory Structure
 
 ```text
-hospital-queue-system/
-├── backend/
-│   ├── controllers/
-│   │   └── patientController.js
-│   ├── models/
-│   │   └── Patient.js
-│   ├── routes/
-│   │   └── patientRoutes.js
-│   └── utils/
-│       └── PriorityQueue.js
-├── frontend/
-│   ├── index.html
-│   ├── script.js
-│   └── style.css
-├── .env
-├── package.json
-└── server.js
+feedback-portal/
+├── backend/               # Express.js Server & REST API
+│   ├── config/            # Database connection configuration
+│   ├── controllers/       # Business logic for API endpoints
+│   ├── middleware/        # Custom middleware (Authentication & Roles)
+│   ├── models/            # Mongoose schemas for MongoDB
+│   ├── routes/            # Express route definitions
+│   └── server.js          # Main application entry point
+│
+└── frontend/              # React.js Client Application
+    ├── src/
+    │   ├── components/    # Reusable UI components (Navbar, Backgrounds)
+    │   ├── context/       # React Context API for global state (Auth)
+    │   ├── pages/         # Top-level route components (Dashboards, Forms)
+    │   ├── App.jsx        # Routing configuration
+    │   └── index.css      # TailwindCSS configurations and global styles
+    └── package.json       # Frontend dependencies (Vite)
 ```
 
 ---
 
-## 🛠️ Installation Steps
+## ⚙️ Backend Explained (`/backend`)
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/hospital-queue-system.git
-   cd hospital-queue-system
-   ```
+The backend is a RESTful API built with Express and connected to a MongoDB database.
 
-2. **Install Node.js dependencies:**
-   ```bash
-   npm install
-   ```
+### 1. Data Models (`/models`)
+*   **`User.js`**: Stores user credentials, email, and role (`user` or `admin`). 
+*   **`Feedback.js`**: Represents general feedback/bug reports. Contains fields for title, description, category (bug, enhancement, ui), and the `targetProduct` (e.g., WhatsApp, PUBG).
+*   **`FeatureRequest.js`**: Similar to feedback but tracks community `votes` and developer `status` (pending, under_review, implemented).
+*   **`Vote.js`**: A join-table schema that links a `User` to a `FeatureRequest` to ensure users can only vote once per feature.
 
-3. **Ensure MongoDB is installed and running** on your local machine (default port `27017`).
+### 2. Controllers & Routes (`/controllers`, `/routes`)
+*   **Auth**: Handles user registration and login, issuing JWT tokens upon success. The *first* user to ever register is automatically granted `admin` rights.
+*   **Feedback**: Handles creating new feedback, fetching lists, and allowing admins to delete inappropriate feedback.
+*   **Features**: Handles creating features, fetching them (sorted by votes), updating their status (admin only), and processing user upvotes.
 
-4. **Environment Variables:**
-   A `.env` file is already included, but you can configure it if necessary:
+### 3. Middleware (`/middleware/auth.js`)
+*   `protect`: Intercepts incoming requests, extracts the JWT from the `Authorization` header, decodes it, and attaches the user document to `req.user`. Blocks unauthorized requests.
+*   `admin`: Ensures that `req.user.role` is set to `admin` before allowing access to destructive or managerial routes.
+
+---
+
+## 🎨 Frontend Explained (`/frontend`)
+
+The frontend is a React Single Page Application (SPA) built with Vite and styled completely with TailwindCSS.
+
+### 1. State Management (`/context/AuthContext.jsx`)
+Global state is managed using React's Context API. The `AuthContext` provides:
+*   The current logged-in user object (`user`).
+*   `login()` and `register()` functions that interact with the backend API and store the JWT in `localStorage`.
+*   A `logout()` function to clear the session.
+*   Axios interceptors are set up here to automatically attach the JWT token to every outgoing API request.
+
+### 2. Routing (`App.jsx`)
+React Router DOM is used for navigation. 
+*   **Protected Routes:** Custom wrapper components (`<PrivateRoute>` and `<AdminRoute>`) inspect the `AuthContext`. If a user is not logged in, or lacks admin privileges, they are redirected appropriately.
+
+### 3. Pages (`/pages`)
+*   **`SubmitFeedback.jsx`**: A unified form for submitting both general feedback and feature requests. Includes dynamic dropdowns for selecting the target Game/App.
+*   **`FeedbackList.jsx` & `FeatureRequests.jsx`**: Data-display pages. The Feature Requests page handles optimistic UI updates when a user clicks the "Vote" button, providing immediate visual feedback.
+*   **`AdminDashboard.jsx`**: A restricted control panel utilizing tabbed navigation to let admins view all data, change the status of features, and delete feedback.
+
+---
+
+## 🚀 Setup Instructions
+
+### Prerequisites
+*   Node.js installed
+*   MongoDB installed locally OR a MongoDB Atlas connection string
+
+### 1. Backend Setup
+1. Navigate to the `backend` folder: `cd backend`
+2. Install dependencies: `npm install`
+3. Create a `.env` file in the `backend` folder:
    ```env
    PORT=5000
-   MONGODB_URI=mongodb://127.0.0.1:27017/hospital-queue
+   MONGO_URI=mongodb://127.0.0.1:27017/feedback-portal
+   JWT_SECRET=your_jwt_secret_here
    ```
+4. Start the server: `npm run dev`
 
----
+### 2. Frontend Setup
+1. Navigate to the `frontend` folder: `cd frontend`
+2. Install dependencies: `npm install`
+3. Start the client: `npm run dev`
 
-## 🚀 How to Run the Project
-
-1. Start the Express server:
-   ```bash
-   npm start
-   ```
-2. Open your web browser and navigate to the local server:
-   👉 **http://localhost:5000**
-3. Start registering patients and experience the Priority Queue in action!
-
----
-
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/patients/add` | Register a new patient and add to the queue |
-| `GET`  | `/api/patients/queue` | Fetch all waiting patients, sorted by the Priority Queue |
-| `POST` | `/api/patients/serve` | Dequeue the highest-priority patient and mark as served |
-| `GET`  | `/api/patients/served`| Get a list of all previously served patients |
-
----
-
-## 📸 Screenshots
-
-*(Add your screenshots here)*
-
-**1. Dashboard & Registration Form:**
-`[Screenshot Placeholder]`
-
-**2. Active Queue Display (with Emergency Highlights):**
-`[Screenshot Placeholder]`
-
-**3. "Currently Serving" Alert:**
-`[Screenshot Placeholder]`
-
----
-
-## 🔮 Future Enhancements
-
-- [ ] **Doctor Dashboards:** Create separate logins for doctors to view their individual assigned patients.
-- [ ] **Authentication:** Implement JWT-based login for hospital staff.
-- [ ] **SMS Notifications:** Send automated SMS to patients when it is their turn using Twilio API.
-- [ ] **Data Analytics:** Add a dashboard showing statistics (e.g., average waiting time, patients served per day).
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+*Note: The frontend runs on `http://localhost:5173` and proxies API requests to the backend at `http://localhost:5000` via Vite's proxy configuration.*
